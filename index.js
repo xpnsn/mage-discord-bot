@@ -90,22 +90,49 @@ for (const folder of commandFolders) {
     }
 }
 
-client.on(Events.InteractionCreate, async interaction =>{
-    if(!interaction.isChatInputCommand()) {
-        return;
-    }
+client.on('interactionCreate', async interaction =>{
+    // if(!interaction.isChatInputCommand()) {
+    //     return;
+    // }
 
     if(!interaction.isButton()) {
         return;
     }
+    try {
 
-    const role = interaction.guild.roles.cache.get(interaction.customID);
+    
+        await interaction.deferReply({ephemeral: true});
+    
+        const role = interaction.Guild.roles.cache.get(interaction.customID);
+    
+        if(!role) {
+            console.log(role)
+            interaction.editReply({
+                content: "there was an error assigning role",
+            })
+            return;
+        }
+    
+        const hasRole = interaction.member.roles.cache.has(role.id);
+    
+        if(hasRole) {
+            await interaction.member.roles.remove(role);
+            await interaction.editReply(`The role ${role} has been removed.`);
+            return;
+        }
 
+        await interaction.member.roles.add(role);
+        await interaction.editReply(`The role ${role} has been added.`);
+        
+    } catch (error) {
+        console.log(error)
+    }
+    
     const command = interaction.client.commands.get(interaction.commandName);
 
     if(!command) {
         console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
+        return;
     }
 
     try {

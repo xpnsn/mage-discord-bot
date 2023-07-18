@@ -45,7 +45,7 @@ client.on('ready', async(c)=>{
 
         roles.forEach(role => {
             row.components.push(
-                new ButtonBuilder().setCustomId(role.id).setEmoji(role.emojiID).setStyle(ButtonStyle.Primary)
+                new ButtonBuilder().setCustomId(role.id).setEmoji(role.emojiID).setStyle(ButtonStyle.Secondary)
             )
         });
         
