@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { Client, IntentsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
 const client = new Client({
@@ -43,7 +45,7 @@ client.on('ready', async(c)=>{
 
         roles.forEach(role => {
             row.components.push(
-                new ButtonBuilder().setCustomId(role.id).setEmoji(role.emojiID).setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder().setCustomId(role.id).setEmoji(role.emojiID).setStyle(ButtonStyle.Primary)
             )
         });
         
@@ -58,4 +60,4 @@ client.on('ready', async(c)=>{
     }
 })
 
-client.login('MTEzMDA5MDk0NTU4MTQzMjg3Mw.Gyg-OW.xKkaiFWbY76XP69ftpeAA_Y9ZsvQy0Otr246M4');
+client.login(process.env.TOKEN);

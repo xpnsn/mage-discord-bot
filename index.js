@@ -95,6 +95,12 @@ client.on(Events.InteractionCreate, async interaction =>{
         return;
     }
 
+    if(!interaction.isButton()) {
+        return;
+    }
+
+    const role = interaction.guild.roles.cache.get(interaction.customID);
+
     const command = interaction.client.commands.get(interaction.commandName);
 
     if(!command) {
