@@ -90,12 +90,12 @@ for (const folder of commandFolders) {
     }
 }
 
-client.on('interactionCreate', async interaction =>{
+client.on('interactionCreate', async (interaction) =>{
     // if(!interaction.isChatInputCommand()) {
     //     return;
     // }
 
-    if(!interaction.isButton()) {
+    if(!interaction.isButton() && !interaction.isChatInputCommand()) {
         return;
     }
     try {
@@ -103,10 +103,12 @@ client.on('interactionCreate', async interaction =>{
     
         await interaction.deferReply({ephemeral: true});
     
-        const role = interaction.Guild.roles.cache.get(interaction.customID);
+        const role = interaction.guild.roles.cache.get(interaction.customId);
+
+        // console.log(interaction.customId);
     
         if(!role) {
-            console.log(role)
+            // console.log(role)
             interaction.editReply({
                 content: "there was an error assigning role",
             })

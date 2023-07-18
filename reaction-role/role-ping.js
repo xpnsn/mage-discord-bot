@@ -32,7 +32,7 @@ const roles = [
 
 const selfrole_pings = new EmbedBuilder()
     .setTitle('Ping roles')
-    .setDescription('𓂃﹒ · <@&1122209202983669970>\n \n𓂃﹒ · <@&1122209059924353126>\n \n𓂃﹒ · <@&1130693593619759164>\n \n𓂃﹒ · <@&1130693554759536681>')
+    .setDescription('\n \n𓂃﹒ · <@&1122209202983669970>\n \n𓂃﹒ · <@&1122209059924353126>\n \n𓂃﹒ · <@&1130693593619759164>\n \n𓂃﹒ · <@&1130693554759536681>\n \n')
     .setImage('https://cdn.discordapp.com/attachments/1130439612184141844/1130697258938138684/Comp_1_00000.png')
     .setColor('#2b2d31');
 
@@ -45,7 +45,7 @@ client.on('ready', async(c)=>{
 
         roles.forEach(role => {
             row.components.push(
-                new ButtonBuilder().setCustomId(role.id).setEmoji(role.emojiID).setStyle(ButtonStyle.Secondary)
+                new ButtonBuilder().setCustomId((role.id)).setEmoji(role.emojiID).setStyle(ButtonStyle.Secondary)
             )
         });
         
