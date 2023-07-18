@@ -1,4 +1,4 @@
-// require('dotenv').config();
+require('dotenv').config();
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -34,7 +34,7 @@ const embed = new EmbedBuilder()
 const white_line = new EmbedBuilder().setImage('https://64.media.tumblr.com/8c44128b2c6c14707ca22771e039144c/aa6a51766468a8c2-81/s1280x1920/167e1986271c65490c525e8250c84c8b34d70c57.pnj').setColor('#2b2d31');
 client.on('messageCreate', (msg)=>{
 
-    console.log(msg.content)
+    // console.log(msg.content)
     
     if(msg.author.bot){
         return;
