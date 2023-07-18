@@ -24,14 +24,14 @@ for (const folder of commandFolders) {
 	}
 }
 
-const rest = new REST({version: '10'}).setToken('MTEzMDA5MDk0NTU4MTQzMjg3Mw.Gyg-OW.xKkaiFWbY76XP69ftpeAA_Y9ZsvQy0Otr246M4');
+const rest = new REST({version: '10'}).setToken(process.env.TOKEN);
 
 (async () => {
 	try {
 		console.log(`Registering slash commands...`);
 
 		await rest.put(
-			Routes.applicationCommands('1130090945581432873'),
+			Routes.applicationCommands(process.env.CLIENT_ID),
 			{ body: commands },
 		);
 

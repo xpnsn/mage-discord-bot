@@ -120,4 +120,4 @@ client.on('ready',()=>{
     });
 });
 
-client.login('MTEzMDA5MDk0NTU4MTQzMjg3Mw.Gyg-OW.xKkaiFWbY76XP69ftpeAA_Y9ZsvQy0Otr246M4');
+client.login(process.env.TOKEN);
