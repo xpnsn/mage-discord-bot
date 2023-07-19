@@ -81,44 +81,42 @@ for (const folder of commandFolders) {
 }
 
 client.on('interactionCreate', async (interaction) =>{
-    // if(!interaction.isChatInputCommand()) {
-    //     return;
-    // }
 
-    if(!interaction.isButton() && !interaction.isChatInputCommand()) {
-        return;
-    }
-    try {
-
-    
-        await interaction.deferReply({ephemeral: true});
-    
-        const role = interaction.guild.roles.cache.get(interaction.customId);
-
-        // console.log(interaction.customId);
-    
-        if(!role) {
-            // console.log(role)
-            interaction.editReply({
-                content: "there was an error assigning role",
-            })
-            return;
-        }
-    
-        const hasRole = interaction.member.roles.cache.has(role.id);
-    
-        if(hasRole) {
-            await interaction.member.roles.remove(role);
-            await interaction.editReply(`The role ${role} has been removed.`);
-            return;
-        }
-
-        await interaction.member.roles.add(role);
-        await interaction.editReply(`The role ${role} has been added.`);
+    if(interaction.isButton()) {
         
-    } catch (error) {
-        console.log(error)
+        try {
+    
+        
+            await interaction.deferReply({ephemeral: true});
+        
+            const role = interaction.guild.roles.cache.get(interaction.customId);
+    
+            // console.log(interaction.customId);
+        
+            if(!role) {
+                // console.log(role)
+                interaction.editReply({
+                    content: "there was an error assigning role",
+                })
+                return;
+            }
+        
+            const hasRole = interaction.member.roles.cache.has(role.id);
+        
+            if(hasRole) {
+                await interaction.member.roles.remove(role);
+                await interaction.editReply(`The role ${role} has been removed.`);
+                return;
+            }
+    
+            await interaction.member.roles.add(role);
+            await interaction.editReply(`The role ${role} has been added.`);
+            
+        } catch (error) {
+            console.log(error)
+        }
     }
+
     
     const command = interaction.client.commands.get(interaction.commandName);
 
