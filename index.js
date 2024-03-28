@@ -1,4 +1,7 @@
 require('dotenv').config();
+const greetingEmbed = require('./src/embeds/welcome');
+const rulesEmbed = require('./src/embeds/rules');
+
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -23,17 +26,10 @@ const client = new Client({
     ],
 });
 
-const embed = new EmbedBuilder()
-    .setColor('#2b2d31')
-    .setTitle('Welcome to 𝐍𝐄𝐊𝐎 𝐂𝐇𝐀𝐍 𝐂𝐑𝐄𝐖')
-    .setDescription(`Ara ara konnichiwa <user> , welcome to 𝐍𝐄𝐊𝐎 𝐂𝐇𝐀𝐍 𝐂𝐑𝐄𝐖 🐾🏳 ! Read the <#1004475415563341884>, checkout <#1004475458362032242>, Don't forget to take <#1004492356071989248>. Taizai o tanoshinde 🤗`)
-    // .setThumbnail(/src/img/thumnail.png)
-    .setThumbnail('https://cdn.discordapp.com/attachments/1118538019687895192/1118545461087850496/waifu-icon-uymnvo79qzfinbs8-c.png')
-    .setImage('https://media.discordapp.net/attachments/1118538019687895192/1118550762168000582/anime-banner-gif-file-1880kb-anpk2r6p128lqcbk.gif');
+// console.log(greetingEmbed);
     
 client.on('messageCreate', (msg)=>{
 
-    // console.log(msg.content)
     
     if(msg.author.bot){
         return;
@@ -41,7 +37,14 @@ client.on('messageCreate', (msg)=>{
     
     if(msg.content === '..welcome-embed') {
         if(msg.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            msg.channel.send({ embeds: [embed]});
+            msg.channel.send({ embeds: [greetingEmbed]});
+        } else {
+            msg.channel.send(`you're missing the permission to use that command.`);
+        }
+    }
+    if(msg.content === '..rules-embed') {
+        if(msg.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            msg.channel.send({ embeds: [rulesEmbed]});
         } else {
             msg.channel.send(`you're missing the permission to use that command.`);
         }
@@ -137,10 +140,10 @@ client.on('interactionCreate', async (interaction) =>{
 client.on('ready',()=>{
     console.log('The bot is online!');
 
-    client.user.setActivity({
-        name: 'Cigarettes After Sex',
-        type: ActivityType.Listening,
-    });
+    // client.user.setActivity({
+    //     nam~e: 'Cigarettes After Sex',
+    //     type: ActivityType.Listening,
+    // });
 });
 
 client.login(process.env.TOKEN);
