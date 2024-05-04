@@ -1,6 +1,6 @@
-const { EmbedBuilder } = require('discord.js')
+import { EmbedBuilder } from 'discord.js';
 
-module.exports = [
+export default [
     new EmbedBuilder()
         .setColor('#2b2d31')
         .setDescription(`

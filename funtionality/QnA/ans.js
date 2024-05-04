@@ -21,4 +21,4 @@ const ans = [
     "🇦"
 ];
 
-module.exports = { ans };
+export default { ans };

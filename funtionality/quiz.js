@@ -1,6 +1,6 @@
-const { EmbedBuilder, MessageCollector } = require('discord.js');
-const {ques} = require('./QnA/ques');
-const {ans} = require('./QnA/ans');
+import { EmbedBuilder, MessageCollector } from 'discord.js';
+import { ques } from './QnA/ques';
+import { ans } from './QnA/ans';
 let cnt = 0;
 
 const scores={};
@@ -79,4 +79,4 @@ const quizCommand = async (interaction) => {
     
 };
 
-module.exports = { quizCommand };
+export default { quizCommand };

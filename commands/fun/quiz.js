@@ -1,5 +1,5 @@
 const {SlashCommandBuilder, PermissionsBitField} = require('discord.js');
-const { quizCommand } = require('./../../funtionality/quiz');
+const { quizCommand } = require('./../../funtionality/quiz').default;
 
 module.exports = {
     data : new SlashCommandBuilder().setName('quiz-question').setDescription('generates a quiz question'),

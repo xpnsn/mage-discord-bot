@@ -1,9 +1,6 @@
-const {SlashCommandBuilder} = require('discord.js');
+import { SlashCommandBuilder } from 'discord.js';
 
-module.exports = {
-    data : new SlashCommandBuilder().setName('ping').setDescription('check bot is online or not'),
-    
-    async execute(interaction) {
-        await interaction.reply('hey there! im alive.');
-    },
-};
+export const data = new SlashCommandBuilder().setName('ping').setDescription('check bot is online or not');
+export async function execute(interaction) {
+    await interaction.reply('hey there! im alive.');
+}

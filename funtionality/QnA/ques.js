@@ -21,4 +21,4 @@ const ques = [
     "Which titan possesses the power of the Female Titan in 'Attack on Titan'?\n\nA. Annie Leonhart\n\nB. Pieck Finger\n\nC. Ymir Fritz\n\nD. Porco Galliard"
 ];
 
-module.exports = { ques };
+export default { ques };
