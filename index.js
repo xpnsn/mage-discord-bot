@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./health-check');
 
 const { readdirSync } = require('node:fs');
 const { join } = require('node:path');
