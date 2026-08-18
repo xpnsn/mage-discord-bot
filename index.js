@@ -4,6 +4,7 @@ require('./health-check');
 const { readdirSync } = require('node:fs');
 const { join } = require('node:path');
 const { Client, IntentsBitField, ActivityType, Events, Collection } = require('discord.js');
+const welcomeEmbed = require('./src/embeds/welcome');
 
 const trigger = [
     ['ded', 'hello', '<@1130090945581432873>'],
@@ -79,19 +80,11 @@ client.on(Events.GuildMemberAdd, async (member) => {
 
     if (!channel) return;
 
-    const welcomeEmbed = new EmbedBuilder()
-        .setColor('#5865F2')
-        .setTitle('Welcome to MAGE')
-        .setDescription(
-            `Ara ara konnichiwa <@${member.id}> 🤍, welcome to Mage Coven\n` +
-            `🕯️📖 Read the <#1221045106690490469> · checkout <#1221014228832616501> · ` +
-            `Taizai to nanishinde 😚`
-        )
-        .setImage('https://media.discordapp.net/attachments/1118538019687895192/1118550762168000582/anime-banner-gif-file-1880kb-anpk2r6p128lqcbk.gif?ex=6a8517d3&is=6a83c653&hm=5bc4d530fee123d734bf8ff72625ab208d9ae176e1ff4c8fbe1e3003756a5792&');
+    const embed = welcomeEmbed(member);
 
     await channel.send({
         content: `Hey <@${member.id}>!`,
-        embeds: [welcomeEmbed],
+        embeds: [embed],
     });
 });
 
