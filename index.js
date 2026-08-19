@@ -1,6 +1,11 @@
 require('dotenv').config();
 require('./health-check');
 
+const {
+    initializeRSS
+} = require('./src/rss/rssManager');
+
+
 const { readdirSync } = require('node:fs');
 const { join } = require('node:path');
 const { Client, IntentsBitField, ActivityType, Events, Collection } = require('discord.js');
@@ -17,7 +22,8 @@ const client = new Client({
         IntentsBitField.Flags.GuildMessages,
         IntentsBitField.Flags.GuildMembers,
         IntentsBitField.Flags.MessageContent,
-        IntentsBitField.Flags.GuildMessageReactions
+        IntentsBitField.Flags.GuildMessageReactions,
+        IntentsBitField.Flags.GuildVoiceStates,
     ],
 });
 
@@ -74,13 +80,26 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 const WELCOME_CHANNEL_ID = '1221014228832616500';
+const WELCOME_ROLE_ID = '1236251489677213787';
 
 client.on(Events.GuildMemberAdd, async (member) => {
     const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+    const role = member.guild.roles.cache.get(WELCOME_ROLE_ID);
 
     if (!channel) return;
 
     const embed = welcomeEmbed(member);
+
+    if (!role) {
+        console.error('Welcome role not found.');
+        return;
+    }
+
+    try {
+        await member.roles.add(role);
+    } catch (error) {
+        console.error('Failed to assign welcome role:', error);
+    }
 
     await channel.send({
         content: `Hey <@${member.id}>!`,
@@ -88,13 +107,14 @@ client.on(Events.GuildMemberAdd, async (member) => {
     });
 });
 
-client.on('ready', () => {
+client.once('ready', () => {
     console.log('The bot is online!');
+    console.log(
+        'Connected guilds:',
+        client.guilds.cache.map(g => `${g.name} (${g.id})`)
+    );
 
-    // client.user.setActivity({
-    //     name: 'Cigarettes After Sex',
-    //     type: ActivityType.Listening,
-    // });
+    initializeRSS(client);
 });
 
 client.login(process.env.TOKEN);

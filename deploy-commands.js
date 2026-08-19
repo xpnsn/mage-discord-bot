@@ -30,12 +30,27 @@ const rest = new REST().setToken(process.env.TOKEN);
     try {
         console.log(`Registering slash commands...`);
 
-        await rest.put(
-            Routes.applicationCommands(process.env.CLIENT_ID),
+        console.log('Commands being registered:');
+
+        for (const command of commands) {
+            console.log(`- /${command.name}`);
+        }
+
+        const guildCommands = await rest.put(
+            Routes.applicationGuildCommands(
+                process.env.CLIENT_ID,
+                process.env.GUILD_ID
+            ),
             { body: commands },
         );
 
-        console.log(`Slash commands registered successfully!`);
+        console.log('\nCommands registered on Discord:');
+
+        for (const command of guildCommands) {
+            console.log(`- /${command.name}`);
+        }
+
+        console.log('\nSlash commands registered successfully!');
 
     } catch (error) {
         console.error(error);
