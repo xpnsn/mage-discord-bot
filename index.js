@@ -1,6 +1,8 @@
 require('dotenv').config();
 require('./health-check');
 
+process.env.FFMPEG_PATH = process.env.FFMPEG_PATH || require('ffmpeg-static');
+
 const {
     initializeRSS
 } = require('./src/rss/rssManager');
@@ -10,6 +12,9 @@ const { readdirSync } = require('node:fs');
 const { join } = require('node:path');
 const { Client, IntentsBitField, ActivityType, Events, Collection } = require('discord.js');
 const welcomeEmbed = require('./src/embeds/welcome');
+const boostEmbed = require('./src/embeds/boost');
+const setupLinkModeration = require('./funtionality/linkModeration');
+const leaveEmbed = require('./src/embeds/leave');
 
 const trigger = [
     ['ded', 'hello', '<@1130090945581432873>'],
@@ -107,12 +112,77 @@ client.on(Events.GuildMemberAdd, async (member) => {
     });
 });
 
-client.once('ready', () => {
+// ================================
+// Server Boost Messages
+// ================================
+
+client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
+
+    // Member just started boosting
+    if (!oldMember.premiumSince && newMember.premiumSince) {
+
+        const boostRoleId = process.env.BOOST_ROLE_ID;
+        const boostChannelId = process.env.BOOST_CHANNEL_ID;
+
+        if (!boostRoleId) {
+            console.warn('BOOST_ROLE_ID is not configured.');
+            return;
+        }
+
+        // Add Booster role
+        try {
+            if (!newMember.roles.cache.has(boostRoleId)) {
+                await newMember.roles.add(boostRoleId);
+            }
+        } catch (error) {
+            console.error('Failed to add booster role:', error);
+        }
+
+        // Send boost message
+        if (!boostChannelId) {
+            console.warn('BOOST_CHANNEL_ID is not configured.');
+            return;
+        }
+
+        const channel = newMember.guild.channels.cache.get(boostChannelId);
+
+        if (!channel) {
+            console.warn(
+                `Boost channel ${boostChannelId} was not found.`
+            );
+            return;
+        }
+
+        try {
+            await channel.send({
+                embeds: [boostEmbed(newMember)]
+            });
+        } catch (error) {
+            console.error('Failed to send boost message:', error);
+        }
+    }
+});
+
+client.on(Events.GuildMemberRemove, async (member) => {
+    const channel = member.guild.channels.cache.get(
+        process.env.LEAVE_CHANNEL_ID
+    );
+
+    if (!channel) return;
+
+    await channel.send({
+        embeds: [leaveEmbed(member)]
+    });
+});
+
+client.once('clientReady', () => {
     console.log('The bot is online!');
     console.log(
         'Connected guilds:',
         client.guilds.cache.map(g => `${g.name} (${g.id})`)
     );
+    
+    setupLinkModeration(client);
 
     initializeRSS(client);
 });

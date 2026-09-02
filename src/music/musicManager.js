@@ -5,11 +5,10 @@ const {
     AudioPlayerStatus,
     NoSubscriberBehavior,
     VoiceConnectionStatus,
-    entersState,
+    StreamType,
 } = require('@discordjs/voice');
 
-const fs = require('node:fs');
-const path = require('node:path');
+const ytdlp = require('yt-dlp-exec');
 
 const players = new Map();
 
@@ -45,16 +44,12 @@ function createGuildPlayer(member) {
     guildPlayer = {
         connection,
         audioPlayer,
-
         queue: [],
-
         currentTrack: null,
-
         volume: 1,
-
         loop: 'off',
-
         isPlaying: false,
+        ytdlpProcess: null,
     };
 
     players.set(guildId, guildPlayer);
@@ -62,9 +57,7 @@ function createGuildPlayer(member) {
     connection.on(
         VoiceConnectionStatus.Disconnected,
         () => {
-            console.log(
-                `[MUSIC] Disconnected from ${member.guild.name}`
-            );
+            console.log(`[MUSIC] Disconnected from ${member.guild.name}`);
         }
     );
 
@@ -72,10 +65,7 @@ function createGuildPlayer(member) {
         AudioPlayerStatus.Playing,
         () => {
             guildPlayer.isPlaying = true;
-
-            console.log(
-                `[MUSIC] Playing: ${guildPlayer.currentTrack?.name}`
-            );
+            console.log(`[MUSIC] Playing: ${guildPlayer.currentTrack?.name}`);
         }
     );
 
@@ -83,7 +73,6 @@ function createGuildPlayer(member) {
         AudioPlayerStatus.Idle,
         () => {
             guildPlayer.isPlaying = false;
-
             handleTrackEnd(guildId);
         }
     );
@@ -91,11 +80,7 @@ function createGuildPlayer(member) {
     audioPlayer.on(
         'error',
         error => {
-            console.error(
-                `[MUSIC] Player error:`,
-                error
-            );
-
+            console.error(`[MUSIC] Player error:`, error);
             handleTrackEnd(guildId);
         }
     );
@@ -103,31 +88,77 @@ function createGuildPlayer(member) {
     return guildPlayer;
 }
 
-async function playTrack(guildId, track) {
+/*
+ * Kills any yt-dlp process still running for this
+ * guild, so we don't leak processes when skipping,
+ * stopping, or moving to the next track.
+ */
+function killCurrentProcess(guildPlayer) {
+    if (guildPlayer.ytdlpProcess && !guildPlayer.ytdlpProcess.killed) {
+        try {
+            guildPlayer.ytdlpProcess.kill('SIGKILL');
+        } catch (error) {
+            // process may have already exited on its own — safe to ignore
+        }
+    }
+
+    guildPlayer.ytdlpProcess = null;
+}
+
+/*
+ * Plays a track by streaming it in real time via yt-dlp.
+ * yt-dlp writes audio bytes to its own stdout as it
+ * downloads, and we pipe that stdout straight into the
+ * Discord voice connection — nothing touches disk, and
+ * memory stays flat regardless of video length.
+ *
+ * track: { name, url, requestedBy }
+ */
+async function playStreamTrack(guildId, track) {
     const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         throw new Error('Music player does not exist.');
     }
 
-    if (!fs.existsSync(track.path)) {
-        throw new Error(
-            `Audio file not found: ${track.path}`
-        );
-    }
+    killCurrentProcess(guildPlayer);
 
     guildPlayer.currentTrack = track;
 
-    const resource = createAudioResource(
-        track.path,
+    const subprocess = ytdlp.exec(
+        track.url,
         {
-            inlineVolume: true,
+            output: '-',
+            format: 'bestaudio/best',
+            quiet: true,
+            noWarnings: true,
+            noCheckCertificate: true,
+            preferFreeFormats: true,
+            noPlaylist: true,
+        },
+        {
+            stdio: ['ignore', 'pipe', 'ignore'],
         }
     );
 
-    resource.volume.setVolume(
-        guildPlayer.volume
-    );
+    guildPlayer.ytdlpProcess = subprocess;
+
+    subprocess.catch(error => {
+        /*
+         * Killing the process intentionally (skip/stop) also
+         * rejects this promise — only log real failures.
+         */
+        if (guildPlayer.ytdlpProcess === subprocess) {
+            console.error('[MUSIC] yt-dlp process error:', error.shortMessage || error.message);
+        }
+    });
+
+    const resource = createAudioResource(subprocess.stdout, {
+        inputType: StreamType.Arbitrary,
+        inlineVolume: true,
+    });
+
+    resource.volume.setVolume(guildPlayer.volume);
 
     guildPlayer.audioPlayer.play(resource);
 }
@@ -135,15 +166,8 @@ async function playTrack(guildId, track) {
 async function addTrack(member, track) {
     const guildPlayer = createGuildPlayer(member);
 
-    /*
-     * If nothing is currently playing,
-     * start this track immediately.
-     */
     if (!guildPlayer.currentTrack) {
-        await playTrack(
-            member.guild.id,
-            track
-        );
+        await playStreamTrack(member.guild.id, track);
 
         return {
             position: 0,
@@ -151,9 +175,6 @@ async function addTrack(member, track) {
         };
     }
 
-    /*
-     * Otherwise add it to the queue.
-     */
     guildPlayer.queue.push(track);
 
     return {
@@ -169,75 +190,34 @@ async function handleTrackEnd(guildId) {
         return;
     }
 
-    const currentTrack =
-        guildPlayer.currentTrack;
+    const currentTrack = guildPlayer.currentTrack;
 
-    /*
-     * Loop current track.
-     */
-    if (
-        guildPlayer.loop === 'track' &&
-        currentTrack
-    ) {
+    if (guildPlayer.loop === 'track' && currentTrack) {
         try {
-            await playTrack(
-                guildId,
-                currentTrack
-            );
+            await playStreamTrack(guildId, currentTrack);
         } catch (error) {
-            console.error(
-                '[MUSIC] Loop error:',
-                error
-            );
+            console.error('[MUSIC] Loop error:', error);
         }
 
         return;
     }
 
-    /*
-     * Loop queue.
-     *
-     * Put the finished track at the end.
-     */
-    if (
-        guildPlayer.loop === 'queue' &&
-        currentTrack
-    ) {
-        guildPlayer.queue.push(
-            currentTrack
-        );
+    if (guildPlayer.loop === 'queue' && currentTrack) {
+        guildPlayer.queue.push(currentTrack);
     }
 
-    /*
-     * Nothing left.
-     */
     if (guildPlayer.queue.length === 0) {
         guildPlayer.currentTrack = null;
-
-        console.log(
-            `[MUSIC] Queue finished for ${guildId}`
-        );
-
+        console.log(`[MUSIC] Queue finished for ${guildId}`);
         return;
     }
 
-    const nextTrack =
-        guildPlayer.queue.shift();
+    const nextTrack = guildPlayer.queue.shift();
 
     try {
-        await playTrack(
-            guildId,
-            nextTrack
-        );
+        await playStreamTrack(guildId, nextTrack);
     } catch (error) {
-        console.error(
-            '[MUSIC] Failed to play next track:',
-            error
-        );
-
-        /*
-         * Try the next track if this one fails.
-         */
+        console.error('[MUSIC] Failed to play next track:', error);
         handleTrackEnd(guildId);
     }
 }
@@ -247,8 +227,7 @@ function getPlayer(guildId) {
 }
 
 function pause(guildId) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
@@ -258,8 +237,7 @@ function pause(guildId) {
 }
 
 function resume(guildId) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
@@ -269,16 +247,15 @@ function resume(guildId) {
 }
 
 async function skip(guildId) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
     }
 
     /*
-     * Stopping the player causes AudioPlayerStatus.Idle,
-     * which then automatically starts the next track.
+     * Stopping the player fires AudioPlayerStatus.Idle,
+     * which automatically starts the next track.
      */
     guildPlayer.audioPlayer.stop();
 
@@ -286,8 +263,7 @@ async function skip(guildId) {
 }
 
 function clearQueue(guildId) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
@@ -299,19 +275,17 @@ function clearQueue(guildId) {
 }
 
 function stop(guildId) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
     }
 
+    killCurrentProcess(guildPlayer);
+
     guildPlayer.queue = [];
-
     guildPlayer.currentTrack = null;
-
     guildPlayer.audioPlayer.stop();
-
     guildPlayer.connection.destroy();
 
     players.delete(guildId);
@@ -320,8 +294,7 @@ function stop(guildId) {
 }
 
 function setVolume(guildId, volume) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
@@ -329,12 +302,15 @@ function setVolume(guildId, volume) {
 
     guildPlayer.volume = volume;
 
+    if (guildPlayer.audioPlayer.state.resource) {
+        guildPlayer.audioPlayer.state.resource.volume.setVolume(volume);
+    }
+
     return true;
 }
 
 function setLoop(guildId, mode) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
@@ -346,30 +322,17 @@ function setLoop(guildId, mode) {
 }
 
 function shuffle(guildId) {
-    const guildPlayer =
-        players.get(guildId);
+    const guildPlayer = players.get(guildId);
 
     if (!guildPlayer) {
         return false;
     }
 
-    for (
-        let i = guildPlayer.queue.length - 1;
-        i > 0;
-        i--
-    ) {
-        const j =
-            Math.floor(
-                Math.random() * (i + 1)
-            );
+    for (let i = guildPlayer.queue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
 
-        [
-            guildPlayer.queue[i],
-            guildPlayer.queue[j]
-        ] = [
-            guildPlayer.queue[j],
-            guildPlayer.queue[i]
-        ];
+        [guildPlayer.queue[i], guildPlayer.queue[j]] =
+            [guildPlayer.queue[j], guildPlayer.queue[i]];
     }
 
     return true;
