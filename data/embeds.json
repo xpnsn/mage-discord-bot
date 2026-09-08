@@ -1,0 +1,12 @@
+{
+  "1221014228832616498": {
+    "ping-role": {
+      "description": "**Choose Your Pings**\n\nNo more getting pinged for everything. From now on, choose the notifications you actually want to receive. React below to pick your pings — you can change your choices anytime. **Notification Roles**\n\nReact with the corresponding number to receive that notification role.\n\n** <:1_:1546834573265211424>  <@&1546795399388598314> **\nGame Night Notifications\n\n**<:2_:1546834658820362240>  <@&1546795466820165642> **\nMovie Night Notifications\n\n**<:3_:1546834725987946536>  <@&1546795306652409897> **\nEvent Announcements\n\n**<:4_:1546834819416072264>  <@&1546795241934164069> **\nChat Revival Notifications\n\n**<:5_:1546834881621925899>  <@&1546795202860023839> **\nVoice Chat Notifications\n\n**<:6_:1546834948642574426>  <@&1546795116440846336> **\nMusic & Karaoke Notifications\n\n**<:7_:1546835018763214858>  <@&1546794478680145980> **\nGiveaway Notifications\n\n*React again to remove a role.*",
+      "title": "Notification Roles"
+    },
+    "talent-role": {
+      "title": "Talent Roles",
+      "description": "**Choose Your Creator Role**\n\nPick the role that best represents what you do. React below to choose your role.\n\n** <:1_:1546834573265211424>  <@&1222895288331796480>  ** — Gamer\n\n** <:2_:1546834658820362240>  <@&1222894922970042418>   ** — Streamer\n\n** <:3_:1546834725987946536>  <@&1222896742983270424>   ** — Influencer\n\n** <:4_:1546834819416072264>  <@&1546796678982537226>  ** — Artist\n\n** <:5_:1546834881621925899>  <@&1546796769726169118> ** — Singer\n\n** <:6_:1546834948642574426>  <@&1222895146241232956> ** — Cosplayer\n\n** <:7_:1546835018763214858>  <@&1546796903218548796>   ** — Photographer\n\n** <:8_:1546900247123591268> <@&1546797057749295164>  ** — Editor\n\n** <:9_:1546900298218340383> <@&1546797137763897444> ** — Writer\n\n*React to add a role. React again to remove it.*"
+    }
+  }
+}
