@@ -89,6 +89,8 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand();
         const guildId = interaction.guild.id;
 
+        await interaction.deferReply({ ephemeral: true });
+
         if (subcommand === 'delete') {
             const messageId = interaction.options.getString('message-id');
             const removed = reactionRoleStore.removeMessage(guildId, messageId);

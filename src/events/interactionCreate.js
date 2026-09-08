@@ -33,10 +33,18 @@ module.exports = {
 
             const payload = { content: 'There was an error while executing this command!', ephemeral: true };
 
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(payload);
-            } else {
-                await interaction.reply(payload);
+            // The interaction token can already be dead here (e.g. the command
+            // took >3s to first respond) — that fallback reply can itself throw
+            // (DiscordAPIError 10062 "Unknown interaction"). Never let that
+            // escape uncaught, or one bad command reply crashes the whole bot.
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp(payload);
+                } else {
+                    await interaction.reply(payload);
+                }
+            } catch (followUpError) {
+                console.error('Failed to report command error to user:', followUpError);
             }
         }
     },
