@@ -5,7 +5,7 @@ process.env.FFMPEG_PATH = process.env.FFMPEG_PATH || require('ffmpeg-static');
 
 const { readdirSync } = require('node:fs');
 const { join } = require('node:path');
-const { Client, IntentsBitField, Collection } = require('discord.js');
+const { Client, IntentsBitField, Collection, Partials } = require('discord.js');
 
 const client = new Client({
     intents: [
@@ -16,6 +16,9 @@ const client = new Client({
         IntentsBitField.Flags.GuildMessageReactions,
         IntentsBitField.Flags.GuildVoiceStates,
     ],
+    // Needed so reaction events (used by /selfrole) still fire for
+    // messages/reactions the bot hasn't cached — e.g. right after a restart.
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User],
 });
 
 // ================================

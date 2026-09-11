@@ -1,10 +1,6 @@
 'use strict';
 
-const reactionRoleStore = require('../embeds/reactionRoleStore');
-
-function emojiKey(emoji) {
-    return emoji.id ?? emoji.name;
-}
+const selfRoles = require('../config/selfRoles');
 
 module.exports = {
     name: 'messageReactionRemove',
@@ -15,27 +11,29 @@ module.exports = {
             if (reaction.partial) await reaction.fetch();
             if (reaction.message.partial) await reaction.message.fetch();
         } catch (error) {
-            console.error('[ReactionRoles] Failed to fetch partial reaction:', error);
+            console.error('Failed to fetch partial reaction:', error);
             return;
         }
 
         const { message } = reaction;
         if (!message.guild) return;
 
-        const roleId = reactionRoleStore.getRoleForReaction(message.guild.id, message.id, emojiKey(reaction.emoji));
-        if (!roleId) return;
+        const panel = selfRoles.findPanelByMessage(message.guild.id, message.id);
+        if (!panel) return;
 
-        const role = message.guild.roles.cache.get(roleId);
-        if (!role) return;
-
-        const botMember = message.guild.members.me;
-        if (role.position >= botMember.roles.highest.position) return;
+        const emojiKey = reaction.emoji.id || reaction.emoji.name;
+        const mapping = panel.roles[emojiKey];
+        if (!mapping) return;
 
         const member = await message.guild.members.fetch(user.id).catch(() => null);
-        if (!member || !member.roles.cache.has(role.id)) return;
+        if (!member) return;
 
-        await member.roles.remove(role).catch(error => {
-            console.error(`[ReactionRoles] Failed to remove role ${role.id} from ${user.id}:`, error);
-        });
+        try {
+            if (member.roles.cache.has(mapping.roleId)) {
+                await member.roles.remove(mapping.roleId);
+            }
+        } catch (error) {
+            console.error('Failed to remove self-role:', error);
+        }
     },
 };

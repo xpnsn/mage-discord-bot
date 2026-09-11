@@ -1,4 +1,6 @@
-const LINK_PERM_ROLE_ID = process.env.LINK_PERM_ROLE_ID;
+'use strict';
+
+const { getRole } = require('../src/config/guildConfig');
 
 // Matches:
 // https://example.com
@@ -21,14 +23,16 @@ module.exports = (client) => {
         // Ignore messages without links
         if (!LINK_REGEX.test(message.content)) return;
 
-        // Safety check in case the role ID isn't configured
-        if (!LINK_PERM_ROLE_ID) {
-            console.warn('LINK_PERM_ROLE_ID is not configured.');
+        const linkPermRoleId = getRole(message.guild.id, 'link');
+
+        // Safety check in case the role isn't configured
+        if (!linkPermRoleId) {
+            console.warn('Link-permission role is not configured. Use /config set-role type:Link.');
             return;
         }
 
         // User has permission to send links
-        if (message.member.roles.cache.has(LINK_PERM_ROLE_ID) || message.member.permissions.has('Administrator')) {
+        if (message.member.roles.cache.has(linkPermRoleId) || message.member.permissions.has('Administrator')) {
             return;
         }
 

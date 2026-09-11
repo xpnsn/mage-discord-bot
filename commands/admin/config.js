@@ -14,6 +14,7 @@ const CHANNEL_CHOICES = [
 const ROLE_CHOICES = [
     { name: 'Welcome', value: 'welcome' },
     { name: 'Boost', value: 'boost' },
+    { name: 'Link', value: 'link' },
 ];
 
 module.exports = {
