@@ -4,6 +4,7 @@ const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('disco
 const embedStore = require('../../src/embeds/embedStore');
 const guildConfig = require('../../src/config/guildConfig');
 const { replySuccess, replyError } = require('../../src/utils/replies');
+const { unescapeText } = require('../../src/utils/textFormatting');
 
 const EVENT_CHOICES = [
     { name: 'Welcome', value: 'welcome' },
@@ -29,12 +30,7 @@ function fieldsFromOptions(interaction) {
 
     for (const key of ['title', 'description', 'color', 'image', 'thumbnail', 'footer']) {
         const value = interaction.options.getString(key);
-
-        if (value !== null) {
-            fields[key] = value
-                .replace(/\\n/g, '\n')
-                .replace(/\\t/g, '\t');
-        }
+        if (value !== null) fields[key] = unescapeText(value);
     }
 
     return fields;

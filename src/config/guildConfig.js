@@ -5,7 +5,7 @@ const JsonStore = require('../utils/jsonStore');
 const store = new JsonStore('guildConfig.json', {});
 
 const CHANNEL_KEYS = ['welcome', 'leave', 'boost', 'announcement'];
-const ROLE_KEYS = ['welcome', 'boost', 'link'];
+const ROLE_KEYS = ['welcome', 'boost', 'link', 'gif'];
 
 // Old deployments configured these through the .env file. Keep reading
 // them as a fallback so nothing breaks until an admin runs /config.
@@ -17,6 +17,7 @@ const ENV_CHANNEL_FALLBACK = {
 const ENV_ROLE_FALLBACK = {
     boost: 'BOOST_ROLE_ID',
     link: 'LINK_PERM_ROLE_ID',
+    gif: 'GIF_PERM_ROLE_ID',
 };
 
 // The welcome channel/role used to be hardcoded constants in index.js

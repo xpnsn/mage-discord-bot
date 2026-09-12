@@ -4,6 +4,7 @@ const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = 
 const { replySuccess, replyError } = require('../../src/utils/replies');
 const { getChannel } = require('../../src/config/guildConfig');
 const embedStore = require('../../src/embeds/embedStore');
+const { unescapeText } = require('../../src/utils/textFormatting');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -71,8 +72,8 @@ module.exports = {
             });
         } else {
             // One-off announcement built from the raw options, same as before.
-            const message = interaction.options.getString('message');
-            const title = interaction.options.getString('title');
+            const message = unescapeText(interaction.options.getString('message'));
+            const title = unescapeText(interaction.options.getString('title'));
             const color = interaction.options.getString('color') || '#5865F2';
             const image = interaction.options.getString('image');
 
