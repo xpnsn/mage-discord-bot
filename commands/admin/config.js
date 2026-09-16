@@ -16,6 +16,7 @@ const ROLE_CHOICES = [
     { name: 'Boost', value: 'boost' },
     { name: 'Link', value: 'link' },
     { name: 'Gif', value: 'gif' },
+    { name: 'Private VC', value: 'privateVc' },
 ];
 
 module.exports = {

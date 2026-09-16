@@ -5,7 +5,7 @@ const JsonStore = require('../utils/jsonStore');
 const store = new JsonStore('guildConfig.json', {});
 
 const CHANNEL_KEYS = ['welcome', 'leave', 'boost', 'announcement'];
-const ROLE_KEYS = ['welcome', 'boost', 'link', 'gif'];
+const ROLE_KEYS = ['welcome', 'boost', 'link', 'gif', 'privateVc'];
 
 // Old deployments configured these through the .env file. Keep reading
 // them as a fallback so nothing breaks until an admin runs /config.

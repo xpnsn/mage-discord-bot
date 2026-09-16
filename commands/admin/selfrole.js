@@ -4,20 +4,12 @@ const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('disco
 const embedStore = require('../../src/embeds/embedStore');
 const selfRoles = require('../../src/config/selfRoles');
 const { replySuccess, replyError } = require('../../src/utils/replies');
+const { normalizeEmoji } = require('../../src/utils/emoji');
 
 const MODE_CHOICES = [
     { name: 'Multiple roles', value: 'multiple' },
     { name: 'Single role only', value: 'unique' },
 ];
-
-// A custom emoji option value looks like <:name:123456789012345678> or
-// <a:name:123...> for animated. Reaction events identify custom emojis by
-// their snowflake ID (not the display string), so that's what we key the
-// panel's role map on. Unicode emojis are keyed by the literal character.
-function normalizeEmoji(raw) {
-    const custom = raw.match(/^<a?:\w+:(\d+)>$/);
-    return custom ? custom[1] : raw;
-}
 
 // Parses a bulk mapping string like "😀=@Role1, 🎮=@Role2, <:pog:123>=@Role3"
 // into [{ rawEmoji, roleId }]. Splits on the LAST "=" in each pair so custom
