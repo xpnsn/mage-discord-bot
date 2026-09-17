@@ -1,0 +1,8 @@
+{
+  "1221014228832616498": {
+    "enabled": true,
+    "channelId": "1221014228832616503",
+    "template": "hey {user}",
+    "deleteAfter": 30
+  }
+}

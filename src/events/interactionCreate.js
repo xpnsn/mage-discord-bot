@@ -1,8 +1,47 @@
 'use strict';
 
+const buttonPanels = require('../config/buttonPanels');
+const embedStore = require('../embeds/embedStore');
+
+async function handleButtonClick(interaction) {
+    const [prefix, panelName, key] = interaction.customId.split(':');
+    if (prefix !== 'bp') return; // not one of ours
+
+    const panel = buttonPanels.getPanel(interaction.guild.id, panelName);
+    const button = panel?.buttons.find(b => b.key === key);
+
+    if (!panel || !button) {
+        await interaction.reply({ content: 'This button is no longer configured.', ephemeral: true }).catch(() => {});
+        return;
+    }
+
+    const fields = embedStore.getEmbed(interaction.guild.id, button.embedName);
+
+    if (!fields) {
+        await interaction.reply({ content: 'The embed for this button could not be found.', ephemeral: true }).catch(() => {});
+        return;
+    }
+
+    const embed = embedStore.buildEmbed(fields, {
+        userMention: `<@${interaction.user.id}>`,
+        username: interaction.user.username,
+        serverName: interaction.guild.name,
+        memberCount: interaction.guild.memberCount,
+    });
+
+    await interaction.reply({ embeds: [embed], ephemeral: true }).catch(error => {
+        console.error('Failed to reply to button click:', error);
+    });
+}
+
 module.exports = {
     name: 'interactionCreate',
     async execute(client, interaction) {
+        if (interaction.isButton()) {
+            await handleButtonClick(interaction);
+            return;
+        }
+
         if (interaction.isAutocomplete()) {
             const command = client.commands.get(interaction.commandName);
 
@@ -33,18 +72,10 @@ module.exports = {
 
             const payload = { content: 'There was an error while executing this command!', ephemeral: true };
 
-            // The interaction token can already be dead here (e.g. the command
-            // took >3s to first respond) — that fallback reply can itself throw
-            // (DiscordAPIError 10062 "Unknown interaction"). Never let that
-            // escape uncaught, or one bad command reply crashes the whole bot.
-            try {
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp(payload);
-                } else {
-                    await interaction.reply(payload);
-                }
-            } catch (followUpError) {
-                console.error('Failed to report command error to user:', followUpError);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(payload);
+            } else {
+                await interaction.reply(payload);
             }
         }
     },
