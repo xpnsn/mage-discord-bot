@@ -1,7 +1,7 @@
 'use strict';
 
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
-const welcomeMessage = require('../../src/config/welcomeMessage');
+const welcomeMessage = require('../../src/config/welcomemessage');
 const { unescapeText } = require('../../src/utils/textFormatting');
 const { replySuccess } = require('../../src/utils/replies');
 
