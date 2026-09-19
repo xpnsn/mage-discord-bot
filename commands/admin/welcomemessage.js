@@ -1,7 +1,7 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
-const welcomeMessage = require('../../src/config/welcomemessage');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
+const welcomeMessage = require('../../src/config/welcomeMessage');
 const { unescapeText } = require('../../src/utils/textFormatting');
 const { replySuccess } = require('../../src/utils/replies');
 
@@ -67,14 +67,14 @@ module.exports = {
             const settings = welcomeMessage.getSettings(guildId);
 
             if (!settings.enabled) {
-                return interaction.reply({ content: 'Auto-deleting welcome message is currently disabled.', ephemeral: true });
+                return interaction.reply({ content: 'Auto-deleting welcome message is currently disabled.', flags: MessageFlags.Ephemeral });
             }
 
             return interaction.reply({
                 content:
                     `**Enabled** in ${settings.channelId ? `<#${settings.channelId}>` : '*unknown channel*'}, deletes after ${settings.deleteAfter}s\n` +
                     `Message: ${settings.template}`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
     },

@@ -1,10 +1,11 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
 const embedStore = require('../../src/embeds/embedStore');
 const ticketConfig = require('../../src/config/ticketConfig');
 const { normalizeEmoji } = require('../../src/utils/emoji');
-const { replySuccess, replyError } = require('../../src/utils/replies');
+const { buildTranscriptEmbeds, sendTranscript } = require('../../src/tickets/transcript');
+const { replySuccess, replyError, replyContent } = require('../../src/utils/replies');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -124,7 +125,16 @@ module.exports = {
                 )
         )
 
-        .addSubcommand(sub => sub.setName('close').setDescription('Close (delete) the current ticket channel')),
+        .addSubcommand(sub => sub.setName('close').setDescription('Close (delete) the current ticket channel'))
+
+        .addSubcommand(sub =>
+            sub
+                .setName('set-log-channel')
+                .setDescription('Set the channel where closed-ticket transcripts are saved')
+                .addChannelOption(o =>
+                    o.setName('channel').setDescription('Log channel').addChannelTypes(ChannelType.GuildText).setRequired(true)
+                )
+        ),
 
     async autocomplete(interaction) {
         const focused = interaction.options.getFocused(true);
@@ -143,6 +153,11 @@ module.exports = {
         const guildId = interaction.guild.id;
 
         if (group === 'panel') {
+            // create/link/close all hit the Discord API (post/react to
+            // messages) before replying — defer up front so nothing here
+            // risks the 3-second interaction ack window.
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
                 return replyError(interaction, 'You need Manage Channels to configure ticket panels.');
             }
@@ -259,7 +274,7 @@ module.exports = {
                     const names = ticketConfig.listPanels(guildId);
 
                     if (!names.length) {
-                        return interaction.reply({ content: 'No ticket panels have been created yet.', ephemeral: true });
+                        return replyContent(interaction, { content: 'No ticket panels have been created yet.', flags: MessageFlags.Ephemeral });
                     }
 
                     const lines = names.map(name => {
@@ -272,7 +287,7 @@ module.exports = {
                         );
                     });
 
-                    return interaction.reply({ content: lines.join('\n\n'), ephemeral: true });
+                    return replyContent(interaction, { content: lines.join('\n\n'), flags: MessageFlags.Ephemeral });
                 }
 
                 if (subcommand === 'delete') {
@@ -288,6 +303,16 @@ module.exports = {
             }
 
             return;
+        }
+
+        if (subcommand === 'set-log-channel') {
+            if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
+                return replyError(interaction, 'You need Manage Channels to do that.');
+            }
+
+            const channel = interaction.options.getChannel('channel');
+            ticketConfig.setLogChannel(guildId, channel.id);
+            return replySuccess(interaction, `Ticket transcripts will now be saved to ${channel} when a ticket is closed.`);
         }
 
         if (subcommand === 'close') {
@@ -306,8 +331,33 @@ module.exports = {
                 return replyError(interaction, "You don't have permission to close this ticket.");
             }
 
-            await interaction.reply('🔒 Closing this ticket in 5 seconds...');
+            // Building the transcript means paging through every message in
+            // the channel, which can take a few seconds — defer first so we
+            // don't risk the 3-second interaction ack window.
+            await interaction.deferReply();
+
+            const logChannelId = ticketConfig.getLogChannel(guildId);
+
+            if (logChannelId) {
+                const logChannel = interaction.guild.channels.cache.get(logChannelId);
+
+                if (logChannel) {
+                    try {
+                        const embeds = await buildTranscriptEmbeds(interaction.channel, {
+                            openerId: ticket.userId,
+                            closerTag: interaction.user.tag,
+                        });
+                        await sendTranscript(logChannel, embeds);
+                    } catch (error) {
+                        console.error('Failed to save ticket transcript:', error);
+                    }
+                } else {
+                    console.warn(`Ticket log channel ${logChannelId} was not found.`);
+                }
+            }
+
             ticketConfig.deleteTicket(guildId, interaction.channel.id);
+            await interaction.editReply('🔒 Closing this ticket in 5 seconds...');
 
             setTimeout(() => {
                 interaction.channel.delete('Ticket closed').catch(error => {

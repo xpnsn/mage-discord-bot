@@ -1,8 +1,4 @@
-const {
-    SlashCommandBuilder,
-    PermissionFlagsBits,
-    ChannelType
-} = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
 
 const {
     setupFeed,
@@ -78,7 +74,7 @@ module.exports = {
             const interval =
                 interaction.options.getInteger('interval') || 10;
 
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             try {
                 await setupFeed(
@@ -114,7 +110,7 @@ module.exports = {
                 content: removed
                     ? '✅ RSS feed removed.'
                     : 'ℹ️ No RSS feed is configured.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -124,7 +120,7 @@ module.exports = {
             if (!config) {
                 return interaction.reply({
                     content: '❌ No RSS feed configured.',
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 });
             }
 
@@ -139,12 +135,12 @@ module.exports = {
                     `**Channel:** <#${config.channelId}>\n` +
                     `**Role:** ${roleText}\n` +
                     `**Interval:** ${config.interval} minute(s)`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
 
         if (subcommand === 'test') {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
             try {
                 await testFeed(

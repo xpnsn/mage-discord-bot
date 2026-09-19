@@ -1,6 +1,6 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
 const embedStore = require('../../src/embeds/embedStore');
 const guildConfig = require('../../src/config/guildConfig');
 const { replySuccess, replyError } = require('../../src/utils/replies');
@@ -175,7 +175,7 @@ module.exports = {
                     content: names.length
                         ? `**Embeds in this server:**\n${names.map(n => `\`${n}\``).join(', ')}`
                         : 'No custom embeds have been created yet.',
-                    ephemeral: true,
+                    flags: MessageFlags.Ephemeral,
                 });
             }
 
@@ -188,8 +188,12 @@ module.exports = {
                 const embed = embedStore.buildEmbed(fields, previewContext(interaction));
 
                 if (subcommand === 'preview') {
-                    return interaction.reply({ embeds: [embed], ephemeral: true });
+                    return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
                 }
+
+                // 'send' does a real network call (channel.send) — defer so
+                // we don't risk the 3-second interaction ack window.
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
                 const channel = interaction.options.getChannel('channel');
                 const content = interaction.options.getString('content') || undefined;

@@ -1,8 +1,6 @@
 require('dotenv').config();
 require('./health-check');
 
-process.env.FFMPEG_PATH = process.env.FFMPEG_PATH || require('ffmpeg-static');
-
 const { readdirSync } = require('node:fs');
 const { join } = require('node:path');
 const { Client, IntentsBitField, Collection, Partials } = require('discord.js');
@@ -49,13 +47,23 @@ for (const folder of readdirSync(commandsRoot)) {
 // ================================
 const eventsRoot = join(__dirname, 'src', 'events');
 
+// A single event handler throwing (e.g. missing permissions in one
+// channel) must never take the whole bot down. client.on()/once() don't
+// await their listener, so an unhandled rejection here would otherwise
+// crash the process — wrap every handler so it just logs and moves on.
+function safeExecute(event, args) {
+    Promise.resolve(event.execute(client, ...args)).catch(error => {
+        console.error(`Unhandled error in "${event.name}" handler:`, error);
+    });
+}
+
 for (const file of readdirSync(eventsRoot).filter(f => f.endsWith('.js'))) {
     const event = require(join(eventsRoot, file));
 
     if (event.once) {
-        client.once(event.name, (...args) => event.execute(client, ...args));
+        client.once(event.name, (...args) => safeExecute(event, args));
     } else {
-        client.on(event.name, (...args) => event.execute(client, ...args));
+        client.on(event.name, (...args) => safeExecute(event, args));
     }
 }
 

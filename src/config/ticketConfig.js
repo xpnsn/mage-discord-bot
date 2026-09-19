@@ -5,14 +5,27 @@ const JsonStore = require('../utils/jsonStore');
 const store = new JsonStore('tickets.json', {});
 
 function getGuildData(guildId) {
-    const data = store.get(guildId, { panels: {}, tickets: {} });
+    const data = store.get(guildId, { panels: {}, tickets: {}, logChannelId: null });
     data.panels ??= {};
     data.tickets ??= {};
+    data.logChannelId ??= null;
     return data;
 }
 
 function saveGuildData(guildId, data) {
     store.set(guildId, data);
+}
+
+// ---- Transcript log channel (guild-wide, not per-panel) ----
+
+function getLogChannel(guildId) {
+    return getGuildData(guildId).logChannelId;
+}
+
+function setLogChannel(guildId, channelId) {
+    const data = getGuildData(guildId);
+    data.logChannelId = channelId;
+    saveGuildData(guildId, data);
 }
 
 // ---- Panels (the message people react to, to open a ticket) ----
@@ -131,4 +144,6 @@ module.exports = {
     getTicket,
     deleteTicket,
     findOpenTicketForUser,
+    getLogChannel,
+    setLogChannel,
 };

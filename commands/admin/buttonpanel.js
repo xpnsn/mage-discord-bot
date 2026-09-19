@@ -1,13 +1,6 @@
 'use strict';
 
-const {
-    SlashCommandBuilder,
-    PermissionFlagsBits,
-    ChannelType,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-} = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const embedStore = require('../../src/embeds/embedStore');
 const buttonPanels = require('../../src/config/buttonPanels');
 const { replySuccess, replyError, replyContent } = require('../../src/utils/replies');
@@ -180,7 +173,7 @@ module.exports = {
 
         // create/link/add-button/remove-button all post or edit a message —
         // defer up front so nothing here risks the 3-second ack window.
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         try {
             if (subcommand === 'create') {
@@ -287,7 +280,7 @@ module.exports = {
                 const names = buttonPanels.listPanels(guildId);
 
                 if (!names.length) {
-                    return replyContent(interaction, { content: 'No button panels have been created yet.', ephemeral: true });
+                    return replyContent(interaction, { content: 'No button panels have been created yet.', flags: MessageFlags.Ephemeral });
                 }
 
                 const lines = names.map(name => {
@@ -298,7 +291,7 @@ module.exports = {
                     return `**${name}** in <#${panel.channelId}> — message ID: \`${panel.messageId}\`\n${buttons}`;
                 });
 
-                return replyContent(interaction, { content: lines.join('\n\n'), ephemeral: true });
+                return replyContent(interaction, { content: lines.join('\n\n'), flags: MessageFlags.Ephemeral });
             }
 
             if (subcommand === 'delete') {

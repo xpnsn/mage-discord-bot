@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const boostEmbed = require('../../src/embeds/boost');
 const { getChannel, getRole } = require('../../src/config/guildConfig');
 const { resolveEventEmbed } = require('../../src/utils/embedResolver');
@@ -14,11 +14,15 @@ module.exports = {
         const member = interaction.member;
         const guildId = interaction.guild.id;
 
+        // role add + channel.send are network calls — defer so we don't
+        // risk the 3-second interaction ack window.
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
         // Add booster role
         const boostRoleId = getRole(guildId, 'boost');
 
         if (boostRoleId && !member.roles.cache.has(boostRoleId)) {
-            await member.roles.add(boostRoleId);
+            await member.roles.add(boostRoleId).catch(error => console.error('Failed to add boost role:', error));
         }
 
         // Get boost channel

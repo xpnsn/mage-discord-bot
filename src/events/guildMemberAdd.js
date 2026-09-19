@@ -4,7 +4,7 @@ const welcomeEmbed = require('../embeds/welcome');
 const { getChannel, getRole } = require('../config/guildConfig');
 const { resolveEventEmbed } = require('../utils/embedResolver');
 const { applyPlaceholders } = require('../embeds/embedStore');
-const welcomeMessage = require('../config/welcomemessage');
+const welcomeMessage = require('../config/welcomeMessage');
 
 function placeholderContext(member) {
     return {

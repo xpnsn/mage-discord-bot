@@ -1,6 +1,6 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { replySuccess, replyError } = require('../../src/utils/replies');
 const { getChannel } = require('../../src/config/guildConfig');
 const embedStore = require('../../src/embeds/embedStore');
@@ -41,6 +41,10 @@ module.exports = {
     async execute(interaction) {
         const savedEmbedName = interaction.options.getString('embed');
         const pingRole = interaction.options.getRole('ping-role');
+
+        // channel.send() is a network call — defer so we don't risk the
+        // 3-second interaction ack window on a slow connection.
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const explicitChannel = interaction.options.getChannel('channel');
         const configuredChannelId = getChannel(interaction.guild.id, 'announcement');

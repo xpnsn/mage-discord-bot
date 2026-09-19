@@ -24,6 +24,10 @@ module.exports = {
             () => leaveEmbed(member)
         );
 
-        await channel.send({ embeds: [embed] });
+        try {
+            await channel.send({ embeds: [embed] });
+        } catch (error) {
+            console.error(`Failed to send leave message in #${channel.name} — check my permissions there:`, error);
+        }
     },
 };

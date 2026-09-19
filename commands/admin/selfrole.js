@@ -1,9 +1,9 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
 const embedStore = require('../../src/embeds/embedStore');
 const selfRoles = require('../../src/config/selfRoles');
-const { replySuccess, replyError } = require('../../src/utils/replies');
+const { replySuccess, replyError, replyContent } = require('../../src/utils/replies');
 const { normalizeEmoji } = require('../../src/utils/emoji');
 
 const MODE_CHOICES = [
@@ -148,6 +148,11 @@ module.exports = {
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
         const guildId = interaction.guild.id;
+
+        // create/link/add-role/remove-role all hit the Discord API (post/react
+        // to messages) before replying — defer up front for every subcommand
+        // so none of them risk the 3-second interaction ack window.
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         try {
             if (subcommand === 'create') {
@@ -300,7 +305,7 @@ module.exports = {
                 const names = selfRoles.listPanels(guildId);
 
                 if (!names.length) {
-                    return interaction.reply({ content: 'No self-role panels have been created yet.', ephemeral: true });
+                    return replyContent(interaction, { content: 'No self-role panels have been created yet.', flags: MessageFlags.Ephemeral });
                 }
 
                 const lines = names.map(name => {
@@ -312,7 +317,7 @@ module.exports = {
                     return `**${name}** (${panel.mode}) in <#${panel.channelId}> — message ID: \`${panel.messageId}\`\n${mappings || '*no roles mapped yet*'}`;
                 });
 
-                return interaction.reply({ content: lines.join('\n\n'), ephemeral: true });
+                return replyContent(interaction, { content: lines.join('\n\n'), flags: MessageFlags.Ephemeral });
             }
 
             if (subcommand === 'delete') {

@@ -1,6 +1,6 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
 const guildConfig = require('../../src/config/guildConfig');
 const { replySuccess } = require('../../src/utils/replies');
 
@@ -106,7 +106,7 @@ module.exports = {
                     `**Channels**\n${channelLines.join('\n')}\n\n` +
                     `**Roles**\n${roleLines.join('\n')}\n\n` +
                     `**Bound embeds**\n${bindingLines.join('\n')}`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
     },

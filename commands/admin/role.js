@@ -1,6 +1,6 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const { replySuccess, replyError } = require('../../src/utils/replies');
 
 module.exports = {
@@ -29,6 +29,10 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand();
         const targetUser = interaction.options.getUser('user');
         const role = interaction.options.getRole('role');
+
+        // members.fetch() can be slow (uncached members hit the API), so
+        // acknowledge the interaction immediately to avoid a 3-second timeout.
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
 

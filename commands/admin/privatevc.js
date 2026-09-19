@@ -1,9 +1,9 @@
 'use strict';
 
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
 const privateVoice = require('../../src/config/privateVoice');
 const { getRole } = require('../../src/config/guildConfig');
-const { replySuccess, replyError } = require('../../src/utils/replies');
+const { replySuccess, replyError, replyContent } = require('../../src/utils/replies');
 
 function hasCreateAccess(interaction) {
     if (interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) return true;
@@ -58,6 +58,12 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand();
         const guildId = interaction.guild.id;
 
+        // create/invite/kick all hit the Discord API (channel creation,
+        // permission edits, member fetch) before replying — defer up
+        // front for every subcommand so nothing here risks the 3-second
+        // interaction ack window.
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
         if (subcommand === 'set-category') {
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
                 return replyError(interaction, 'You need Manage Channels to do that.');
@@ -76,11 +82,11 @@ module.exports = {
             const entries = Object.entries(privateVoice.getSettings(guildId).channels);
 
             if (!entries.length) {
-                return interaction.reply({ content: 'No private voice channels are active right now.', ephemeral: true });
+                return replyContent(interaction, { content: 'No private voice channels are active right now.', flags: MessageFlags.Ephemeral });
             }
 
             const lines = entries.map(([channelId, info]) => `<#${channelId}> — owner: <@${info.ownerId}>`);
-            return interaction.reply({ content: lines.join('\n'), ephemeral: true });
+            return replyContent(interaction, { content: lines.join('\n'), flags: MessageFlags.Ephemeral });
         }
 
         if (subcommand === 'create') {

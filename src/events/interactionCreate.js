@@ -1,5 +1,6 @@
 'use strict';
 
+const { MessageFlags } = require('discord.js');
 const buttonPanels = require('../config/buttonPanels');
 const embedStore = require('../embeds/embedStore');
 
@@ -11,14 +12,14 @@ async function handleButtonClick(interaction) {
     const button = panel?.buttons.find(b => b.key === key);
 
     if (!panel || !button) {
-        await interaction.reply({ content: 'This button is no longer configured.', ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: 'This button is no longer configured.', flags: MessageFlags.Ephemeral }).catch(() => {});
         return;
     }
 
     const fields = embedStore.getEmbed(interaction.guild.id, button.embedName);
 
     if (!fields) {
-        await interaction.reply({ content: 'The embed for this button could not be found.', ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: 'The embed for this button could not be found.', flags: MessageFlags.Ephemeral }).catch(() => {});
         return;
     }
 
@@ -29,7 +30,7 @@ async function handleButtonClick(interaction) {
         memberCount: interaction.guild.memberCount,
     });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true }).catch(error => {
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral }).catch(error => {
         console.error('Failed to reply to button click:', error);
     });
 }
@@ -68,14 +69,22 @@ module.exports = {
         try {
             await command.execute(interaction);
         } catch (error) {
-            console.error(error);
+            console.error(`Error executing "${interaction.commandName}":`, error);
 
-            const payload = { content: 'There was an error while executing this command!', ephemeral: true };
+            const payload = { content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral };
 
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(payload);
-            } else {
-                await interaction.reply(payload);
+            // The interaction may already be dead (expired token, e.g. the
+            // command took too long to even get here) — if so, reply()/
+            // followUp() below will ALSO throw. Never let that escape
+            // uncaught; there's nothing more useful to do than log it.
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp(payload);
+                } else {
+                    await interaction.reply(payload);
+                }
+            } catch (reportError) {
+                console.error(`Failed to report the error back to the user for "${interaction.commandName}":`, reportError);
             }
         }
     },

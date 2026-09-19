@@ -54,6 +54,14 @@ then show as online in Discord.
 
 ---
 
+## Music removed
+
+The music commands (`/play`, `/pause`, `/resume`, `/skip`, `/stop`, `/queue`,
+`/nowplaying`) and their backing `musicManager` have been removed entirely,
+along with the now-unused dependencies (`@discordjs/voice`, `ffmpeg-static`,
+`opusscript`, `yt-dlp-exec`). The `GuildVoiceStates` intent is still needed
+and stays — it now powers `/vc` (private voice channels), not music.
+
 ## New: in-Discord admin features
 
 On top of the deploy fixes above, the bot's code was reorganized (event
